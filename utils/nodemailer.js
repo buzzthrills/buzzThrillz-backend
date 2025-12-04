@@ -2,10 +2,12 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const transport = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,      // secure port
+  secure: true,   // true for port 465
   auth: {
     user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
+    pass: process.env.MAIL_PASS, // App Password (NOT normal Gmail password)
   },
 });
 
