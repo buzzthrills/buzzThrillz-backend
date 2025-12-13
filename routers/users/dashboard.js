@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../../models/user");
-const Subscription = require("../../models/Subscription");
+const Subscription = require("../../models/subscription");
 const CallRequest = require("../../models/callRequest");
 
 // POST /api/subscription/book-call

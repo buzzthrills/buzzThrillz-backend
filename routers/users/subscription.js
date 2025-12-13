@@ -2,8 +2,8 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../../models/user");
-const Subscription = require("../../models/Subscription");
-const Plan = require("../../models/Plan"); // optional if you have a Plan collection
+const Subscription = require("../../models/subscription");
+const Plan = require("../../models/plan"); // optional if you have a Plan collection
 const { default: axios } = require("axios");
 
 
