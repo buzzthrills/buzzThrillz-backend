@@ -53,7 +53,9 @@ app.post('/upload', upload.single('image'), async (req, res) => {
 
 // User Routes
 // app.use('/user_product', require('./routes/users/product'));
-// app.use('/user_auth', require('./routes/users/auth'));
+app.use('/user_auth', require('./routers/users/auth'));
+app.use('/user_subscription', require('./routers/users/subscription'));
+app.use('/user_dashboard', require('./routers/users/dashboard'));
 // app.use('/user_cart', require('./routes/users/cart'));
 // app.use('/user_order', require('./routes/users/order'));
 app.use('/user_newsletter', require('./routers/users/newsletter'));
