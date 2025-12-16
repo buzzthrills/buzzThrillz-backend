@@ -4,7 +4,7 @@ const UserSchema = new mongoose.Schema({
     fullName: String,
     email: { type: String, unique: true },
     phone: String,
-    password: { type: String, required: true },
+    password: { type: String },
     preferredContact: { type: String, enum: ["call", "whatsapp", "email"] },
 
     // Relationship with subscriptions
