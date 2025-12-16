@@ -31,14 +31,28 @@ router.post("/initiate", async (req, res) => {
     const { email, planKey, billingCycle } = req.body;
 
     try {
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!email || !planKey) {
+            return res.status(400).json({ message: "Email and planKey are required" });
+        }
 
-        // Find the actual plan
+        // 1️⃣ Find or create user
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = await User.create({
+                email,
+                role: "user", // or null / default
+                createdAt: new Date(),
+            });
+        }
+
+        // 2️⃣ Find plan
         const plan = await Plan.findOne({ key: planKey });
-        if (!plan) return res.status(404).json({ message: "Plan not found" });
+        if (!plan) {
+            return res.status(404).json({ message: "Plan not found" });
+        }
 
-        // Create subscription
+        // 3️⃣ Create subscription
         const subscription = await Subscription.create({
             user: user._id,
             plan: plan._id,
@@ -48,30 +62,29 @@ router.post("/initiate", async (req, res) => {
             endDate: null,
         });
 
-        // Attach subscription to user
+        // 4️⃣ Attach subscription to user
         user.subscription = subscription._id;
         await user.save();
 
-        // Return FULL user with the subscription + plan populated
-        const fullUser = await User.findById(user._id)
-            .populate({
-                path: "subscription",
-                populate: { path: "plan" }
-            });
-
-        res.json({
-            success: true,
-            msg: "Subscription created successfully",
-            subscriptionId: subscription._id, // <-- add this
-            user: fullUser
+        // 5️⃣ Return populated user
+        const fullUser = await User.findById(user._id).populate({
+            path: "subscription",
+            populate: { path: "plan" },
         });
 
+        res.status(200).json({
+            success: true,
+            msg: "Subscription initiated successfully",
+            subscriptionId: subscription._id,
+            user: fullUser,
+        });
 
     } catch (err) {
-        console.error(err);
+        console.error("Subscription initiate error:", err);
         res.status(500).json({ message: "Server error" });
     }
 });
+
 
 
 router.post("/verify", async (req, res) => {
