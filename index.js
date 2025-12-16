@@ -65,6 +65,8 @@ app.use('/user_newsletter', require('./routers/users/newsletter'));
 // Admin Routes
 app.use('/admin_auth', require('./routers/admin/auth'));
 app.use('/admin_mail', require('./routers/admin/mail'));
+app.use('/admin_dashboard', require('./routers/admin/dashboard'));
+app.use('/admin_request', require('./routers/admin/Request'));
 
 // Start server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

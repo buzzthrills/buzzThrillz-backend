@@ -6,61 +6,96 @@ const CallRequest = require("../../models/callRequest");
 
 // POST /api/subscription/book-call
 router.post("/book-call", async (req, res) => {
-    try {
-        const { userId, subscriptionId, recipientInfo } = req.body;
+  try {
+    const { subscriberInfo, recipientInfo } = req.body;
 
-        // 1️⃣ Validate required fields
-        if (!userId || !subscriptionId || !recipientInfo) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
-
-        const { date, time, name, phone } = recipientInfo;
-
-        if (!date || !time || !name || !phone) {
-            return res.status(400).json({ message: "Recipient name, phone, date and time are required" });
-        }
-
-        const scheduledFor = new Date(`${date}T${time}`);
-        if (isNaN(scheduledFor.getTime())) {
-            return res.status(400).json({ message: "Invalid date or time" });
-        }
-
-        // 2️⃣ Find user & subscription
-        const user = await User.findById(userId);
-        const subscription = await Subscription.findById(subscriptionId);
-
-        if (!user || !subscription) {
-            return res.status(404).json({ message: "User or subscription not found" });
-        }
-
-        // 3️⃣ Create CallRequest
-        const callRequest = await CallRequest.create({
-            user: user._id,
-            subscription: subscription._id,
-            recipient: {
-                name: recipientInfo.name,
-                phone: recipientInfo.phone,
-                relationship: recipientInfo.relationship || "",
-                occasionType: recipientInfo.occasionType || "",
-                date,
-                time,
-                callType: recipientInfo.callType || "Birthday Call",
-            },
-            scheduledFor,
-            callType: recipientInfo.callType || "Birthday Call",
-            message: recipientInfo.message || "",
-            status: "pending",
-        });
-
-        res.status(201).json({
-            message: "Call booked successfully",
-            callRequest,
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
+    // 1️⃣ Validate subscriber info
+    if (!subscriberInfo?.email || !subscriberInfo?.phone) {
+      return res.status(400).json({ message: "Email and phone are required" });
     }
+
+    // 2️⃣ Validate recipient info
+    const { date, time, name, phone } = recipientInfo || {};
+    if (!date || !time || !name || !phone) {
+      return res.status(400).json({
+        message: "Recipient name, phone, date and time are required",
+      });
+    }
+
+    const scheduledFor = new Date(`${date}T${time}`);
+    if (isNaN(scheduledFor.getTime())) {
+      return res.status(400).json({ message: "Invalid date or time" });
+    }
+
+    // 3️⃣ Find user
+    const user = await User.findOne({
+      $or: [
+        { email: subscriberInfo.email },
+        { phone: subscriberInfo.phone },
+      ],
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "No account found. Please subscribe to book a call.",
+      });
+    }
+
+    // 4️⃣ Find active subscription + plan
+    const subscription = await Subscription
+      .findOne({ user: user._id, status: "active" })
+      .populate("plan");
+
+    if (!subscription) {
+      return res.status(403).json({
+        message: "No active subscription found for this user",
+      });
+    }
+
+    // 5️⃣ Enforce call limit
+    const remainingCalls =
+      subscription.plan.maxCalls - subscription.callsUsed;
+
+    if (remainingCalls <= 0) {
+      return res.status(403).json({
+        message: "You have used all your available calls for this plan",
+      });
+    }
+
+    // 6️⃣ Create CallRequest
+    const callRequest = await CallRequest.create({
+      user: user._id,
+      subscription: subscription._id,
+      recipient: {
+        name,
+        phone,
+        relationship: recipientInfo.relationship || "",
+        occasionType: recipientInfo.occasionType || "",
+        date,
+        time,
+      },
+      scheduledFor,
+      callType: recipientInfo.callType || "Birthday Call",
+      message: recipientInfo.message || "",
+      status: "pending",
+    });
+
+    // 7️⃣ Increment callsUsed (consume 1 call)
+    subscription.callsUsed += 1;
+    await subscription.save();
+
+    res.status(201).json({
+      message: "Call booked successfully",
+      remainingCalls: remainingCalls - 1,
+      callRequest,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
+
+
 
 // GET /api/subscription/call-history/:userId
 // GET /api/subscription/call-history/:userId
