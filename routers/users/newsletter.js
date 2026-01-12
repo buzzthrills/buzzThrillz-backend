@@ -61,7 +61,7 @@ router.post('/subscribe', async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Subscription failed. Please try again."
+      message: "You are already subscribed!."
     });
   }
 });
