@@ -1,24 +1,26 @@
 const mongoose = require("mongoose");
 
-
-
-const CallRequestSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription" },
-  
-  recipient: {
-    name: String,
-    phone: String,
-    relationship: String,
-    occasionType: String,
-    date: String,
-    time: String,
-    callType: String,
-  },
-
-  scheduledFor: Date,
+const RecipientSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  phone: { type: String, required: true },
+  relationship: String,
+  occasionType: String,
+  date: String, // ISO date string
+  time: String, // HH:mm
   callType: String,
   message: String,
+  specialInstructions: String,  // Plus/Corporate
+  voiceNoteUrl: String,         // Orbit
+  preferredCaller: String,      // Orbit
+});
+
+const CallRequestSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription", required: true },
+  
+  recipient: { type: RecipientSchema, required: true },
+
+  scheduledFor: Date,  // actual scheduled datetime
   status: { 
     type: String, 
     enum: ["pending", "completed", "failed", "rescheduled"], 
@@ -28,6 +30,5 @@ const CallRequestSchema = new mongoose.Schema({
   adminNotes: String,
   createdAt: { type: Date, default: Date.now },
 });
-
 
 module.exports = mongoose.model("CallRequest", CallRequestSchema);

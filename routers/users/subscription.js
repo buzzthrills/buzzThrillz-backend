@@ -26,7 +26,6 @@ router.post("/initiate-payment", async (req, res) => {
     res.json({ subscriptionId: subscription._id });
 });
 
-
 router.post("/initiate", async (req, res) => {
     const { email, planKey, billingCycle } = req.body;
 
@@ -35,9 +34,21 @@ router.post("/initiate", async (req, res) => {
             return res.status(400).json({ message: "Email and planKey are required" });
         }
 
-        // 1️⃣ Find or create user
-        let user = await User.findOne({ email });
+        // 1️⃣ Find user
+        let user = await User.findOne({ email }).populate({
+            path: "subscription",
+            populate: { path: "plan" },
+        });
 
+        // 1a️⃣ Check for active subscription
+        if (user?.subscription && user.subscription.status === "active") {
+            return res.status(400).json({
+                message: "This email already has an active subscription",
+                subscriptionId: user.subscription._id,
+            });
+        }
+
+        // 1b️⃣ Create user if not exists
         if (!user) {
             user = await User.create({
                 email,
@@ -84,7 +95,6 @@ router.post("/initiate", async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
-
 
 
 router.post("/verify", async (req, res) => {

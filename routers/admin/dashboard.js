@@ -37,11 +37,19 @@ router.post('/', async (req, res) => {
 
     // Get total bookings
     const totalBookings = await CallRequest.countDocuments();
+    const testBooking = await CallRequest.findOne();
+    console.log("Booking user ID:", testBooking.user);
+    const userExists = await User.findById(testBooking.user);
+    console.log("User exists in current DB?", userExists);
+
 
     // Get all bookings (send full object)
-    const bookings = await CallRequest.find()
-      .populate("user", "fullName email phone") // optional
-      .populate("subscription", "plan status");
+    const bookings = await CallRequest.find({ user: { $ne: null } })
+      .populate("user", "fullName email phone")
+      .populate("subscription", "plan status")
+      .sort({ createdAt: -1 })
+      .limit(5);
+
 
     res.status(200).json({
       totalUsers,

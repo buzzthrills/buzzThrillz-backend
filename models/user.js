@@ -9,6 +9,8 @@ const UserSchema = new mongoose.Schema({
 
     // Relationship with subscriptions
     subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription" },
+    otp: String,
+    otpExpiresAt: Date,
 
     createdAt: { type: Date, default: Date.now }
 });

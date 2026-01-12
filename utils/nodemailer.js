@@ -105,7 +105,7 @@ const sendOTP = async (email, otp) => {
         Your OTP verification code is: <br /> <br />
         <font size="3">${otp}</font> <br />
         Best regards,<br />
-        Team MiniProject.
+        Team Buzzthrills.
         </p>`,
     });
     console.log("Email sent:", info.response);
