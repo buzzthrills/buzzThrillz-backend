@@ -5,6 +5,7 @@ const User = require("../../models/user");
 const Subscription = require("../../models/subscription");
 const Plan = require("../../models/plan"); // optional if you have a Plan collection
 const { default: axios } = require("axios");
+const { addUserToPaidTag } = require("../../functions/mailchimp");
 
 
 
@@ -108,17 +109,24 @@ router.post("/verify", async (req, res) => {
 
         if (paystackRes.data.data.status === "success") {
             const subscription = await Subscription.findById(subscriptionId);
-            subscription.status = "active"; // activate subscription
+            subscription.status = "active";
             subscription.startDate = new Date();
             subscription.endDate = new Date(new Date().setMonth(new Date().getMonth() + 1));
             await subscription.save();
 
-            // Attach subscription to user
             const user = await User.findById(subscription.user);
             user.subscription = subscription._id;
             await user.save();
 
-            // return populated user
+            // 🔥 ADD TO MAILCHIMP TAG
+            // 🔥 ADD TO MAILCHIMP TAG
+            await addUserToPaidTag(
+                user.email,
+                user.firstName,
+                user.lastName,
+                "paid_user" // or "pro_plan", "monthly_subscriber"
+            );
+
             const fullUser = await User.findById(user._id).populate({
                 path: "subscription",
                 populate: { path: "plan" }
