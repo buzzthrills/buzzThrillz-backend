@@ -5,26 +5,37 @@ const RecipientSchema = new mongoose.Schema({
   phone: { type: String, required: true },
   relationship: String,
   occasionType: String,
-  date: String, // ISO date string
-  time: String, // HH:mm
+  date: String,
+  time: String,
   callType: String,
   message: String,
-  specialInstructions: String,  // Plus/Corporate
-  voiceNoteUrl: String,         // Orbit
-  preferredCaller: String,      // Orbit
+  specialInstructions: String,
+  voiceNoteUrl: String,
+  preferredCaller: String,
+
+  // NEW: store uploaded files per recipient
+  files: [
+    {
+      url: String,
+      public_id: String,
+      uploadedAt: Date,
+    }
+  ]
 });
+
+
 
 const CallRequestSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   subscription: { type: mongoose.Schema.Types.ObjectId, ref: "Subscription", required: true },
-  
+
   recipient: { type: RecipientSchema, required: true },
 
   scheduledFor: Date,  // actual scheduled datetime
-  status: { 
-    type: String, 
-    enum: ["pending", "completed", "failed", "rescheduled"], 
-    default: "pending" 
+  status: {
+    type: String,
+    enum: ["pending", "completed", "failed", "rescheduled"],
+    default: "pending"
   },
   completedAt: Date,
   adminNotes: String,
